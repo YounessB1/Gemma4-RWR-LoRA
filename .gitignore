@@ -1,5 +1,6 @@
-artifacts/
-logs/
 __pycache__/
 *.pyc
 .venv/
+slurm/
+artifacts/checkpoints
+artifacts/tokenized
