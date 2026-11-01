@@ -1,0 +1,23 @@
+# GPU training stage (03 train, 04 merge). Superset of the CPU deps.
+#
+# IMPORTANT — torch must match the cluster's CUDA. Do NOT rely on a plain `pip install
+# torch` here; install the CUDA-matched build first, e.g. for CUDA 12.4:
+#     pip install "torch>=2.4" --index-url https://download.pytorch.org/whl/cu124
+# (H200 is Hopper / sm_90 — use a CUDA 12.x or 13.x torch build.)
+# Then `pip install -r requirements-gpu.txt` for the rest. bitsandbytes also needs to
+# match the CUDA toolchain; only needed if you set load_in_4bit=true.
+
+transformers>=5.20,<6
+jinja2>=3.1              # required by apply_chat_template (not auto-installed by transformers)
+datasets>=3.0
+accelerate>=0.34
+peft>=0.13
+bitsandbytes>=0.43      # only used when load_in_4bit=true (QLoRA)
+trl>=0.11               # optional; not imported by the code, kept for convenience
+pyyaml>=6.0
+numpy>=1.26
+sentencepiece>=0.2.0
+protobuf>=4.25,<6
+
+# torch is intentionally NOT pinned here — install the CUDA-matched wheel separately
+# (see the note above) so bitsandbytes/flash-attn line up with the cluster toolchain.

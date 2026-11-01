@@ -1,0 +1,7 @@
+artifacts/tokenized_16k_backup/
+artifacts/tokenized_24k_backup/
+artifacts/rwr_dataset.jsonl
+artifacts/checkpoints/
+artifacts/adapter/
+artifacts/smoke/
+artifacts/tokenized/cache-*.arrow

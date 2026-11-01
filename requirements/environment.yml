@@ -1,0 +1,25 @@
+# Conda env for RED-RL, built with miniforge as a PREFIX env under $HOME.
+# A prefix env (-p) avoids two things that bite on a shared cluster: the module's
+# default envs dir is often not user-writable, and `conda activate <name>` is
+# unreliable in a non-interactive SLURM shell. We install to ~/envs/red-rl and
+# call ~/envs/red-rl/bin/python directly (no activation needed anywhere).
+#
+#     module load miniforge/24.3.0-0
+#     conda env create -f requirements/environment.yml -p ~/envs/red-rl
+#
+# This creates the Python interpreter + pip only. It does NOT install torch (torch
+# must be the CUDA-matched build — install it after, see requirements-gpu.txt).
+#
+# After the env exists (use the full path to its pip/python, no activate):
+#   GPU/training node:
+#     ~/envs/red-rl/bin/pip install "torch>=2.4" --index-url https://download.pytorch.org/whl/cu124
+#     ~/envs/red-rl/bin/pip install -r requirements/requirements-gpu.txt
+#   CPU-only node (stages 01/02 only):
+#     ~/envs/red-rl/bin/pip install -r requirements/requirements-cpu.txt
+#
+# (No `name:` key on purpose — with -p the prefix path is the env's identity.)
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip

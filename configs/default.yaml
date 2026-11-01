@@ -1,0 +1,54 @@
+# RED-RL default config. Every field maps to red_rl.config.Config.
+# Override any field on the CLI (e.g. --max-steps 20) or by editing this file.
+
+# ---- base model ----
+# google/gemma-4-31b-it is the real HF repo (polito/gemma-4-31b is only a serving alias).
+model_id: google/gemma-4-31b-it
+load_in_4bit: false        # H200: bf16 LoRA (false). Set true for <80GB GPUs (QLoRA).
+attn_impl: sdpa            # falls back sdpa->eager; "flash_attention_2" needs the wheel
+
+# ---- data paths (relative to the project dir, or absolute) ----
+train_data_dir: train-data
+dataset_jsonl: artifacts/rwr_dataset.jsonl
+tokenized_dir: artifacts/tokenized
+
+# ---- dataset build + tokenization ----
+output_cap: 6000           # max chars per tool output (head+tail kept); 0 disables
+max_seq_len: 24576         # H200: 24576 (middle-drop keeps prompt+recent) | A100-40GB: ~2048
+num_proc: 8                # CPU workers for tokenization; set 1 if you hit tokenizer issues
+
+# ---- held-out eval: whole targets, not random runs (avoids flag/target leakage) ----
+n_eval_benchmarks: 3       # hold out this many whole bench_ids (chosen by seed) for eval
+eval_benchmarks: []        # or list specific bench_ids to hold out; overrides n_eval_benchmarks
+eval_steps: 100            # run held-out eval every N steps (0 = eval off)
+eval_per_benchmark: 50     # cap eval trajectories per held-out target (0 = all); 3*50 = 150
+
+# ---- RWR weighting: w = min(exp(score/beta), w_max) ----
+beta: 0.5
+w_max: 20.0
+
+# ---- LoRA ----
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_targets: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+# ---- training ----
+per_device_batch: 1
+grad_accum: 16
+lr: 1.0e-4
+warmup_steps: 20           # transformers 5.x dropped warmup_ratio; explicit steps (~3% of ~560)
+epochs: 1.0                # start at 1; extend to 2-3 only if held-out eval keeps improving
+max_steps: -1              # >0 overrides epochs (use e.g. 20 for a smoke test)
+logging_steps: 1           # loss is already computed each step; logging it is ~free and lets us confirm grad_norm>0 / loss dropping immediately
+save_steps: 50             # step-based checkpoints; plus a wall-clock safety checkpoint below
+max_train_hours: 23.5      # checkpoint + stop cleanly at 23.5h, before SLURM's 24h hard kill
+save_total_limit: 3
+gradient_checkpointing: true
+seed: 0
+resume: true
+
+# ---- outputs ----
+output_dir: artifacts/checkpoints
+adapter_dir: artifacts/adapter
+merged_dir: artifacts/merged
